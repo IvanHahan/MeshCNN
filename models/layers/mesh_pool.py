@@ -54,23 +54,33 @@ class MeshPool(nn.Module):
         mesh.clean(mask, edge_groups)
         fe = edge_groups.rebuild_features(self.__fe[mesh_index], mask, self.__out_target)
         self.__updated_fe[mesh_index] = fe
+        # if mesh.edges_count > self.__out_target:
+        #     self.__pool_main(mesh_index)
 
     def __pool_edge(self, mesh, edge_id, mask, edge_groups):
         # if the edge is a boundary edge or any of its neighbor edges are boundary
-        if self.has_boundaries(mesh, edge_id):
-            return False
-        elif self.__clean_side(mesh, edge_id, mask, edge_groups, 0)\
-            and self.__clean_side(mesh, edge_id, mask, edge_groups, 2) \
-            and self.__is_one_ring_valid(mesh, edge_id):
+        # if self.has_boundaries(mesh, edge_id):
+        #     return False
+        # print()
+        if self.__is_one_ring_valid(mesh, edge_id):
             self.__merge_edges[0] = self.__pool_side(mesh, edge_id, mask, edge_groups, 0)
             self.__merge_edges[1] = self.__pool_side(mesh, edge_id, mask, edge_groups, 2)
             mesh.merge_vertices(edge_id)
             mask[edge_id] = False
             MeshPool.__remove_group(mesh, edge_groups, edge_id)
             mesh.edges_count -= 1
-            return True
-        else:
-            return False
+        # if self.__clean_side(mesh, edge_id, mask, edge_groups, 0)\
+        #     and self.__clean_side(mesh, edge_id, mask, edge_groups, 2) \
+        #     and self.__is_one_ring_valid(mesh, edge_id):
+        #     self.__merge_edges[0] = self.__pool_side(mesh, edge_id, mask, edge_groups, 0)
+        #     self.__merge_edges[1] = self.__pool_side(mesh, edge_id, mask, edge_groups, 2)
+        #     mesh.merge_vertices(edge_id)
+        #     mask[edge_id] = False
+        #     MeshPool.__remove_group(mesh, edge_groups, edge_id)
+        #     mesh.edges_count -= 1
+        #     return True
+        # else:
+        #     return False
 
     def __clean_side(self, mesh, edge_id, mask, edge_groups, side):
         if mesh.edges_count <= self.__out_target:
@@ -95,6 +105,11 @@ class MeshPool(nn.Module):
 
     @staticmethod
     def __is_one_ring_valid(mesh, edge_id):
+        """
+        Checks that edge triangles lie on a flat plane and if we collapse the edge these only 2 triangles will be
+        collapsed.
+        """
+
         v_a = set(mesh.edges[mesh.ve[mesh.edges[edge_id, 0]]].reshape(-1))
         v_b = set(mesh.edges[mesh.ve[mesh.edges[edge_id, 1]]].reshape(-1))
         shared = v_a & v_b - set(mesh.edges[edge_id])
@@ -103,6 +118,8 @@ class MeshPool(nn.Module):
     def __pool_side(self, mesh, edge_id, mask, edge_groups, side):
         info = MeshPool.__get_face_info(mesh, edge_id, side)
         key_a, key_b, side_a, side_b, _, other_side_b, _, other_keys_b = info
+        if key_a == -1 or key_b == -1:
+            return -1
         self.__redirect_edges(mesh, key_a, side_a - side_a % 2, other_keys_b[0], mesh.sides[key_b, other_side_b])
         self.__redirect_edges(mesh, key_a, side_a - side_a % 2 + 1, other_keys_b[1], mesh.sides[key_b, other_side_b + 1])
         MeshPool.__union_groups(mesh, edge_groups, key_b, key_a)
@@ -118,10 +135,15 @@ class MeshPool(nn.Module):
         info = MeshPool.__get_face_info(mesh, edge_id, side)
         key_a, key_b, side_a, side_b, other_side_a, other_side_b, other_keys_a, other_keys_b = info
 
-        #  if we have a separate triangle not connected to anything
-        if len(set(other_keys_a).intersection([key_a, key_b, edge_id])) == 2 or \
-                len(set(other_keys_b).intersection([key_a, key_b, edge_id])) == 2:
+        if key_a == -1 or key_b == -1 or -1 in other_keys_a or -1 in other_keys_b:
             return []
+        if len(set(other_keys_a).intersection([key_a, key_b, edge_id])) == 2 or \
+                len(set(other_keys_b).intersection([key_a, key_b, edge_id])) == 2: #  if we have a separate triangle not connected to anything
+            return []
+
+        # if len(set(mesh.edges[other_keys_a].flatten()).intersection(mesh.edges[edge_id])) == 2 or \
+        #         len(set(mesh.edges[other_keys_b].flatten()).intersection(mesh.edges[edge_id])) == 2:
+        #     return []
 
         shared_items = MeshPool.__get_shared_items(other_keys_a, other_keys_b)
         if len(shared_items) == 0:
