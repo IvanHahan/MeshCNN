@@ -15,10 +15,13 @@ def edges_to_path(edges, color=tm.visual.color.random_color()):
     return path
 
 
-def show_mesh(mesh, label,  colors=[[0,0,0,255], [120,120,120,255]]):
+def show_mesh(mesh, label=None,  colors=[[0,0,0,255], [120,120,120,255]]):
     colors = np.array(colors)
     edges = mesh.vs[mesh.edges]
-    tm.Scene([edges_to_path(e, colors[int(l)]) for e, l in zip(edges, label)]).show()
+    if label is None:
+        edges_to_path(edges).show()
+    else:
+        tm.Scene([edges_to_path(e, colors[int(l)]) for e, l in zip(edges, label)]).show()
 
 
 def show_vertices(mesh, label,  colors=[[0,0,0,255], [120,120,120,255]]):

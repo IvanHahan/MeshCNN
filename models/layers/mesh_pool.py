@@ -63,8 +63,13 @@ class MeshPool(nn.Module):
         #     return False
         # print()
         if self.__is_one_ring_valid(mesh, edge_id):
+
             self.__merge_edges[0] = self.__pool_side(mesh, edge_id, mask, edge_groups, 0)
             self.__merge_edges[1] = self.__pool_side(mesh, edge_id, mask, edge_groups, 2)
+            if self.__merge_edges[0] == -1:
+                self.__merge_edges[0] = self.__merge_edges[1]
+            if self.__merge_edges[1] == -1:
+                self.__merge_edges[1] = self.__merge_edges[0]
             mesh.merge_vertices(edge_id)
             mask[edge_id] = False
             MeshPool.__remove_group(mesh, edge_groups, edge_id)
