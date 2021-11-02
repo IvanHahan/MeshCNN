@@ -49,6 +49,11 @@ def run_test(epoch=-1):
 
         ncorrect, nexamples = model.test()
 
+        # ncorrect, nexamples, pred_class = model.test()
+        # import os
+        # with open(mesh['path'] + '.lbl', 'w') as f:
+        #     f.write('\n'.join(pred_class.tolist()))
+
         writer.update_counter(ncorrect, nexamples)
     writer.print_acc(epoch, writer.acc)
     return writer.acc

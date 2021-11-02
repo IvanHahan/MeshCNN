@@ -28,27 +28,10 @@ def run_test(epoch=-1):
     opt = TestOptions().parse()
     opt.serial_batches = True  # no shuffle
     dataset = DataLoader(opt)
-    model = create_model(opt)
-    writer = Writer(opt)
-    # test
-    writer.reset_counter()
     for i, data in enumerate(dataset):
         mesh = deepcopy(data['mesh'][0])
 
         show_mesh(mesh, data['label'][0])
-        # model.set_input(data)
-        #
-        # pred_class = model.forward().max(1)[1]
-        # # show_mesh(mesh, pred_class[0])
-        # edges = mesh.edges
-        # vertices = mesh.vs
-        # vertex_label = np.zeros(len(vertices))
-        # for e_l, e in zip(pred_class[0], edges):
-        #     if e_l == 1:
-        #         vertex_label[e] = 1
-        # faces = mesh.faces
-        # vertex_colors = np.array([[255,100,0,255], [0,100,255,255]])[vertex_label.astype(int)]
-        # tm.Trimesh(faces=faces, vertices=vertices, vertex_colors=vertex_colors).show()
 
 if __name__ == '__main__':
     run_test()

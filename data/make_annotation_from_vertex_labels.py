@@ -161,7 +161,7 @@ def show_mesh(edges, vs, label,  colors=[[0,0,0,255], [120,120,120,255]]):
 
 
 def create_files(path):
-    for filename in glob.glob(os.path.join(path, 'test/*.obj')):
+    for filename in glob.glob(os.path.join(path, 'obj/*.obj')):
         basename = os.path.splitext(os.path.basename(filename))[0]
         v_label_name = os.path.join(os.path.join(path, 'vseg'), basename + '.eseg')
         label_name = os.path.join(os.path.join(path, 'seg'), basename + '.eseg')
@@ -183,7 +183,7 @@ def create_files(path):
 
         with open(label_name, 'w') as f:
             f.write('\n'.join(edge_label))
-        print(len(edge_label))
+        print(filename, len(edge_label))
         if os.path.isfile(label_name):
 
             create_sseg_file(gemms, edge_label, export_name_seseg)
