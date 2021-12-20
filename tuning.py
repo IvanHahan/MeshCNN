@@ -24,13 +24,10 @@ def train_segmentation(config):
         args.lr = config.get('lr')
     
     model = MeshSegmenter(args)
-    callback_tune = TuneReportCallback(metrics='val_iou', on="validation_end")
+    callback_tune = TuneReportCallback(metrics=['val_iou', 'val_f1'], on="validation_end")
     callback_lightning = ModelCheckpoint(monitor='val_iou', mode='max', save_top_k=3,
                                          filename='{epoch:02d}-{val_acc_epoch:.2f}', )
 
-    # callback_tune_f1 = TuneReportCallback(metrics='val_f1', on="validation_end")
-    # callback_lightning_f1 = ModelCheckpoint(monitor='val_f1', mode='max', save_top_k=3,
-    #                                      filename='{epoch:02d}-{val_acc_epoch:.2f}', )
 
     trainer = Trainer.from_argparse_args(args, callbacks=[callback_tune, callback_lightning])
     trainer.fit(model)
@@ -42,9 +39,9 @@ if __name__== '__main__':
 
     config = {
         # 'num_aug': tune.grid_search([10, 20, 30]),
-        # 'resblocks': tune.grid_search([2, 3, 4, 5]),
-        'ncf': tune.grid_search([[64, 128, 256, 512], [32, 64, 128, 256]]),
-        # 'slide_verts': tune.grid_search([0.08, 0.1, 0.12, 0.16, 0.2]),
+        'resblocks': tune.grid_search([3, 4, 5]),
+        # 'ncf': tune.grid_search([[64, 128, 256, 512], [32, 64, 128, 256]]),
+        'slide_verts': tune.grid_search([0.05, 0.1, 0.2]),
         # 'lr': tune.grid_search([0.00005, 0.0002, 0.0005]) 
     }
 
@@ -59,7 +56,7 @@ if __name__== '__main__':
         config=config, num_samples=1, resources_per_trial={"gpu": 1, 'cpu': 1})
 
     # Saving the results
-    best_config = analysis.get_best_config(metric='val_iou', mode="max")
+    best_config = analysis.get_best_config(metric='val_f1', mode="max")
     print("Best config: ", best_config)
 
     file = open(os.path.join(args.checkpoints_dir, 'roof_seg', 'best_config.json'), 'w')
