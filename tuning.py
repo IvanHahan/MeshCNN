@@ -3,9 +3,11 @@ import json
 import torch.cuda
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning import Trainer
-from train_pl import *
 from ray import tune
 from ray.tune.integration.pytorch_lightning import TuneReportCallback
+
+from train_pl import *
+
 
 args = PLOptions().parse()
 
@@ -14,13 +16,9 @@ def train_segmentation(config):
         args.__dict__[k] = v
     
     model = MeshSegmenter(args)
-    callback_tune = TuneReportCallback(metrics='val_iou', on="validation_end")
+    callback_tune = TuneReportCallback(metrics=['val_iou', 'val_f1'], on="validation_end")
     callback_lightning = ModelCheckpoint(monitor='val_iou', mode='max', save_top_k=3,
                                          filename='{epoch:02d}-{val_iou:.2f}', )
-
-    # callback_tune_f1 = TuneReportCallback(metrics='val_f1', on="validation_end")
-    # callback_lightning_f1 = ModelCheckpoint(monitor='val_f1', mode='max', save_top_k=3,
-    #                                      filename='{epoch:02d}-{val_acc_epoch:.2f}', )
 
     trainer = Trainer.from_argparse_args(args, callbacks=[callback_tune, callback_lightning])
     trainer.fit(model)
